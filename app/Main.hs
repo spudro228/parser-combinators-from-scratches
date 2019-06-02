@@ -1,25 +1,55 @@
 module Main where
 
-import Lib
+import           Control.Monad.Writer
+import           Data.Char
+import           Data.String          (String)
+import           Lib
 
-k:: [Int]
-k = map (*2) [1,2,3]
+fact :: Integer -> Writer String Integer
+fact 0 = return 1
+fact n = do
+  let n1 = n - 1
+  tell $ "First way:" ++ show n ++ "\n"
+  m <- fact n1
+  tell $ "Second way:" ++ show m ++ "\n"
+  let r = m * n
+  tell $ "Result: " ++ show r ++ "\n"
+  return r
 
+type FailureMessage = String
 
+data Result a
+  = Success a
+  | Failure FailureMessage
+  deriving (Show)
 
-filterM :: (a -> Bool) -> [a] -> [a]
-filterM _ [] = []
-filterM check (x:[]) = case check x of
-                        True -> [x]
-                        False -> []
-filterM check (x:xs) = case check x of
-                        True -> x : filterM check xs
-                        False -> filterM check xs
+newtype Parser a =
+  Parser (String -> Result (a, String))
+
+parseA :: Parser String
+parseA =
+  Parser
+    (\input ->
+       case head input of
+         'a' -> Success ([head input], tail input)
+         _ -> Failure $ "Expect \"a\" but got" ++ "'" ++ [head input] ++ "'")
+
+run :: Parser a -> String -> Result (a, String)
+run parser input =
+  let Parser innerFn = parser
+   in innerFn input
+
+--  run (parseA `andThen` parseA)  "aabc" -> Success (["a","a"],"bc")
+andThen :: Parser String -> Parser String -> Parser [String]
+andThen firstParser secondParser =
+  Parser
+    (\input ->
+       case run firstParser input of
+         Failure failMessage -> Failure failMessage
+         Success (parsed, otherInput) ->
+           case run secondParser otherInput of
+             Failure failMessage -> Failure failMessage
+             Success (parsed', otherInput') -> Success ([parsed, parsed'], otherInput'))
 
 main :: IO ()
-main = do
-        someFunc
-        putStrLn "Kek"
-        print $ filterM (== 2) [1,2,3]
-        print $ filterM (\x -> mod x 2 == 0) [1,2,3]
-
+main = print $ run ( parseA `andThen` parseA) "aabc"
