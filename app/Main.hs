@@ -1,9 +1,10 @@
 module Main where
 
+import           Control.Monad
 import           Control.Monad.Writer
 import           Data.Char
 import           Data.String          (String)
-import           Lib
+import           GHC.Base
 
 fact :: Integer -> Writer String Integer
 fact 0 = return 1
@@ -22,6 +23,15 @@ data Result a
   = Success a
   | Failure FailureMessage
   deriving (Show)
+
+instance Functor Result where
+  fmap f (Success x)   = Success (f x)
+  fmap _ (Failure msg) = Failure msg
+
+instance Applicative Result where
+  pure = Success
+  Failure msg <*> _ = Failure msg
+  (Success f) <*> a = fmap f a
 
 newtype Parser a =
   Parser (String -> Result (a, String))
@@ -52,4 +62,4 @@ andThen firstParser secondParser =
              Success (parsed', otherInput') -> Success ([parsed, parsed'], otherInput'))
 
 main :: IO ()
-main = print $ run ( parseA `andThen` parseA) "aabc"
+main = print $ run (parseA `andThen` parseA) "aabc"
