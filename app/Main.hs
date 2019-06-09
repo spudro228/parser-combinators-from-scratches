@@ -33,17 +33,44 @@ instance Applicative Result where
   Failure msg <*> _ = Failure msg
   (Success f) <*> a = fmap f a
 
+instance Monad Result where
+  a >>= f =
+    case a of
+      Success x -> f x
+      Failure y -> Failure y
+
 newtype Parser a =
   Parser (String -> Result (a, String))
 
-parseA :: Parser String
-parseA =
+parseChar :: Char -> Parser String
+parseChar matchedChar =
   Parser
     (\input ->
-       case head input of
-         'a' -> Success ([head input], tail input)
-         _ -> Failure $ "Expect \"a\" but got" ++ "'" ++ [head input] ++ "'")
+       if head input == matchedChar
+         then Success ([head input], tail input)
+         else Failure $ "Expect \"a\" but got" ++ "'" ++ [head input] ++ "'")
 
+--       case head input of
+--         matchedChar -> Success ([head input], tail input)
+--         _ ->
+orElse :: Parser String -> Parser String -> Parser String
+orElse firsParser secondParser =
+  Parser
+    (\input ->
+       case run firsParser input of
+         Success (parsedData, otherInput) -> Success (parsedData, otherInput)
+         Failure msg                      -> run secondParser input)
+
+--orElse :: Parser String -> Parser String -> Parser a
+--orElse firstParser secondParse =
+--  Parser
+--    (\input ->
+--       case run firstParser input of
+--         Success (parser, otherInput) -> Success (parser, otherInput)
+--         Failure msg                  -> run secondParse input)
+--instance Alternative Parser
+--  empty = Parser (\(x) -> x)
+--  p1 <|> p2 = orElse p1 p2
 run :: Parser a -> String -> Result (a, String)
 run parser input =
   let Parser innerFn = parser
@@ -61,5 +88,16 @@ andThen firstParser secondParser =
              Failure failMessage -> Failure failMessage
              Success (parsed', otherInput') -> Success ([parsed, parsed'], otherInput'))
 
+--retSuccess :: String -> Result String
+--retSuccess s =
+--  if s == "s"
+--    then Success s
+--    else Failure "fail"
+
+--fff i = do
+--  x <- retSuccess i
+--  y <- retSuccess x
+--  return [x, y]
+
 main :: IO ()
-main = print $ run (parseA `andThen` parseA) "aabc"
+main = print $ run (parseChar 'a' `andThen` parseChar 'a') "aabc"
