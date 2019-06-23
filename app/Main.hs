@@ -42,6 +42,17 @@ instance Monad Result where
 newtype Parser a =
   Parser (String -> Result (a, String))
 
+instance Functor Parser where
+  fmap f parser =
+    Parser
+      (\input ->
+         let result = run parser input
+          in case result of
+               Success (value, remaining) -> Success (f value, remaining)
+               Failure msg                -> Failure msg)
+
+(|>>) x f = map f x
+
 parseChar :: Char -> Parser String
 parseChar matchedChar =
   Parser
@@ -77,7 +88,7 @@ run parser input =
    in innerFn input
 
 --  run (parseA `andThen` parseA)  "aabc" -> Success (["a","a"],"bc")
-andThen :: Parser String -> Parser String -> Parser [String]
+andThen :: Parser String -> Parser String -> Parser (String, String)
 andThen firstParser secondParser =
   Parser
     (\input ->
@@ -86,18 +97,16 @@ andThen firstParser secondParser =
          Success (parsed, otherInput) ->
            case run secondParser otherInput of
              Failure failMessage -> Failure failMessage
-             Success (parsed', otherInput') -> Success ([parsed, parsed'], otherInput'))
+             Success (parsed', otherInput') -> Success ((parsed, parsed'), otherInput'))
 
 --retSuccess :: String -> Result String
 --retSuccess s =
 --  if s == "s"
 --    then Success s
 --    else Failure "fail"
-
 --fff i = do
 --  x <- retSuccess i
 --  y <- retSuccess x
 --  return [x, y]
-
 main :: IO ()
 main = print $ run (parseChar 'a' `andThen` parseChar 'a') "aabc"
