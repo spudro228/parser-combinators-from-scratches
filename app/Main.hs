@@ -51,7 +51,7 @@ instance Functor Parser where
                Success (value, remaining) -> Success (f value, remaining)
                Failure msg                -> Failure msg)
 
-(|>>) x f = map f x
+(|>) x f = fmap f x
 
 parseChar :: Char -> Parser String
 parseChar matchedChar =
@@ -72,6 +72,21 @@ orElse firsParser secondParser =
          Success (parsedData, otherInput) -> Success (parsedData, otherInput)
          Failure msg                      -> run secondParser input)
 
+(<|>) a b = a orElse b
+
+andThen :: Parser String -> Parser String -> Parser (String, String)
+andThen firstParser secondParser =
+  Parser
+    (\input ->
+       case run firstParser input of
+         Failure failMessage -> Failure failMessage
+         Success (parsed, otherInput) ->
+           case run secondParser otherInput of
+             Failure failMessage -> Failure failMessage
+             Success (parsed', otherInput') -> Success ((parsed, parsed'), otherInput'))
+
+(.>>.) a b = a andThen b
+
 --orElse :: Parser String -> Parser String -> Parser a
 --orElse firstParser secondParse =
 --  Parser
@@ -88,25 +103,6 @@ run parser input =
    in innerFn input
 
 --  run (parseA `andThen` parseA)  "aabc" -> Success (["a","a"],"bc")
-andThen :: Parser String -> Parser String -> Parser (String, String)
-andThen firstParser secondParser =
-  Parser
-    (\input ->
-       case run firstParser input of
-         Failure failMessage -> Failure failMessage
-         Success (parsed, otherInput) ->
-           case run secondParser otherInput of
-             Failure failMessage -> Failure failMessage
-             Success (parsed', otherInput') -> Success ((parsed, parsed'), otherInput'))
 
---retSuccess :: String -> Result String
---retSuccess s =
---  if s == "s"
---    then Success s
---    else Failure "fail"
---fff i = do
---  x <- retSuccess i
---  y <- retSuccess x
---  return [x, y]
 main :: IO ()
 main = print $ run (parseChar 'a' `andThen` parseChar 'a') "aabc"
