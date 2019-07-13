@@ -23,5 +23,4 @@ cabal.project.local~
 .ghc.environment.*
 
 .stack-work/
-example4.cabal
 /.idea/
