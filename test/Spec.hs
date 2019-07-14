@@ -12,3 +12,8 @@ main =
       it "use alternative parser" $ do (run (parseChar 'a' <||> parseChar 'b') "bca") `shouldBe` Success ("b", "ca")
     describe "\"And\' [.>>.] combinator" $ do
       it "use both parser" $ do (run (parseChar 'a' .>>. parseChar 'b') "abc") `shouldBe` Success (("a", "b"), "c")
+    describe "Parser functor [|>>]" $ do
+      it "apply sume function for prsing result, use \"fmap\"" $ do
+        (run (fmap (++ "a") (parseChar 'a')) "abc") `shouldBe` Success ("aa", "bc")
+      it "apply sume function for prsing result, use [|>>]" $ do
+        (run ((parseChar 'a') |>> (++ "a")) "abc") `shouldBe` Success ("aa", "bc")
