@@ -18,9 +18,6 @@ instance (Eq m) => Eq (Result m) where
   (Success a) == (Success b) = a == b
   (Success a) /= (Success b) = a /= b
 
---  Failure msg == Failure msg' = msg == msg'
---  Success a /= Success b = a /= b
---  Failure msg /= Failure msg' = msg /= msg'
 instance Functor Result where
   fmap f (Success x) = Success (f x)
   fmap _ (Failure msg) = Failure msg
@@ -48,7 +45,7 @@ instance Functor Parser where
                Success (value, remaining) -> Success (f value, remaining)
                Failure msg -> Failure msg)
 
-(|>>) x f = map f x
+x |>> f = fmap f x
 
 parseChar :: Char -> Parser String
 parseChar matchedChar =
@@ -58,9 +55,6 @@ parseChar matchedChar =
          then Success ([head input], tail input)
          else Failure $ "Expect \"a\" but got" ++ "'" ++ [head input] ++ "'")
 
---       case head input of
---         matchedChar -> Success ([head input], tail input)
---         _ ->
 orElse :: Parser String -> Parser String -> Parser String
 orElse firsParser secondParser =
   Parser
@@ -72,16 +66,6 @@ orElse firsParser secondParser =
 (<||>) :: Parser String -> Parser String -> Parser String
 a <||> b = a `orElse` b
 
---orElse :: Parser String -> Parser String -> Parser a
---orElse firstParser secondParse =
---  Parser
---    (\input ->
---       case run firstParser input of
---         Success (parser, otherInput) -> Success (parser, otherInput)
---         Failure msg                  -> run secondParse input)
---instance Alternative Parser
---  empty = Parser (\(x) -> x)
---  p1 <|> p2 = orElse p1 p2
 run :: Parser a -> String -> Result (a, String)
 run parser input =
   let Parser innerFn = parser
@@ -102,12 +86,3 @@ andThen firstParser secondParser =
 
 (.>>.) :: Parser String -> Parser String -> Parser (String, String)
 a .>>. b = a `andThen` b
---retSuccess :: String -> Result String
---retSuccess s =
---  if s == "s"
---    then Success s
---    else Failure "fail"
---fff i = do
---  x <- retSuccess i
---  y <- retSuccess x
---  return [x, y]
