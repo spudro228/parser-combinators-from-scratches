@@ -22,8 +22,9 @@ main =
         (run (choice [parseChar 'b', parseChar 'c', parseChar 'a']) "abc") `shouldBe` Success ("a", "bc")
       it "choice first parser" $ do
         (run (choice [parseChar 'a', parseChar 'c', parseChar 'b']) "abc") `shouldBe` Success ("a", "bc")
-    describe "\"anyOf\" parse any character from list in string" $ do
-      it "choice ['a','f','m']" $ do (run (anyOf ['a', 'm', 'f']) "abc") `shouldBe` Success ("a", "bc")
-      it "choice ['a', 'b', 'c']" $ do (run (anyOf ['a', 'b', 'c']) "abc") `shouldBe` Success ("a", "bc")
-      it "choice number ['0' .. '9']" $ do (run (anyOf ['0' .. '9']) "9abc") `shouldBe` Success ("9", "bc")
-      it "dont choice number ['0' .. '9']" $ do (run (anyOf ['0' .. '9']) "|bc") `shouldBe` Failure ("asdasd")
+--    describe "\"anyOf\" parse any character from list in string" $ do
+--      it "anyOf ['a','f','m']" $ do (run (anyOf ['a', 'm', 'f']) "abc") `shouldBe` Success ("a", "bc")
+--      it "anyOf ['a', 'b', 'c']" $ do (run (anyOf ['a', 'b', 'c']) "abc") `shouldBe` Success ("a", "bc")
+--      it "anyOf number 9 from ['0' .. '9']" $ do (run (anyOf ['0' .. '9']) "9abc") `shouldBe` Success ("9", "bc")
+--      it "anyOf number 96 from ['0' .. '9']" $ do (run (anyOf ['0' .. '9']) "96abc") `shouldBe` Success ("96", "bc")
+--      it "dont choice number 9 from ['0' .. '9']" $ do (run (anyOf ['0' .. '9']) "|bc") `shouldBe` Failure "asdasd"
