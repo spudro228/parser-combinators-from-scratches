@@ -18,7 +18,7 @@ instance (Eq m) => Eq (Result m) where
   (Success a) == (Success b) = a == b
   (Failure a) == (Failure b) = a == b
   (Success a) /= (Success b) = a /= b
-  (Failure a) /= (Failure b) = a == b
+  (Failure a) /= (Failure b) = a /= b
 
 instance Functor Result where
   fmap f (Success x)   = Success (f x)
@@ -55,7 +55,7 @@ parseChar matchedChar =
     (\input ->
        if head input == matchedChar
          then Success ([head input], tail input)
-         else Failure $ "Expect \"a\" but got" ++ "'" ++ [head input] ++ "'")
+         else Failure $ "Expect 'a' but got " ++ "'" ++ [head input] ++ "'")
 
 orElse :: Parser String -> Parser String -> Parser String
 orElse firsParser secondParser =
@@ -91,4 +91,8 @@ a .>>. b = a `andThen` b
 choice :: [Parser String] -> Parser String
 choice listOfParsers@(x:xy) = foldl (<||>) x xy
 
-anyOf chars = undefined
+parsersFromChars chars = map parseChar chars
+
+anyOf chars = choice $ parsersFromChars chars
+
+
